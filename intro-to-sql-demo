@@ -1,0 +1,162 @@
+--- Intro to SQL Demo 
+--- TechTogether Seattle 
+--- 12-04-2021 
+
+---------------------------------------------
+-- step 1. look at data  (top 100 records)
+---------------------------------------------
+
+SELECT *
+
+FROM Invoice
+
+limit 100;
+
+
+---------------------------------------------
+--Q1: What are the total sales by Day in 2007? 
+---------------------------------------------
+select InvoiceDate, 
+    sum(Total) as total_sales
+
+from Invoice
+
+where InvoiceDate between '2007-01-01' and '2008-01-01'
+
+group by 1 
+
+order by 1; 
+
+---------------------------------------------
+--Q2: Total sales for 2007 and 2008 combined 
+---------------------------------------------
+-- union all 
+
+-- 2007
+select strftime('%Y', InvoiceDate) as invoice_year,  -- get year from YYYY-MM-DD format 
+    sum(Total) as total_sales
+
+from Invoice
+
+where InvoiceDate between '2007-01-01' and '2008-01-01' -- filtering on date 
+
+group by 1 
+
+union all 
+
+-- 2008
+select strftime('%Y', InvoiceDate) as invoice_year, 
+    sum(Total) as total_sales
+
+from Invoice
+
+where InvoiceDate between '2008-01-01' and '2009-01-01'
+
+group by 1 
+
+order by 1; 
+
+---------------------------------------------
+-- what are the total sales by year?
+---------------------------------------------
+select  strftime('%Y', InvoiceDate) as invoice_year, 
+    sum(Total) as total_sales, 
+    count(distinct Invoiceid) as number_of_sales, 
+    sum(Total) / count(distinct Invoiceid) as average_invoice_price,
+    count(*) as number_of_rows -- to check for duplicates 
+
+from Invoice
+
+group by 1 
+
+order by 1; 
+
+
+---------------------------------------------
+-- what was the most popular artist (or top 3) by number of sales?
+---------------------------------------------
+select d.Name as artist_name
+, sum(a.UnitPrice) as total_sales 
+, row_number() over(order by sum(a.UnitPrice) desc) as artist_rank   
+
+from InvoiceLine a 
+
+inner join Track b 
+on a.TrackId = b.TrackId
+
+inner join Album c 
+on b.AlbumId = c.AlbumId  
+
+inner join Artist d 
+on c.ArtistId = d.ArtistId 
+
+group by 1
+
+order by total_sales desc; 
+
+
+---------------------------------------------
+-- Which artists had no sales? 
+---------------------------------------------
+select a.Name as artist_name 
+, case when d.InvoiceLineId is null then 1 else 0 end as no_sale_indicator 
+, sum(d.UnitPrice) as total_sales
+, row_number() over(order by sum(d.UnitPrice) desc) as artist_row_number    
+, rank() over(order by sum(d.UnitPrice) desc) as artist_rank  
+
+from Artist  a 
+
+left join Album b
+on a.ArtistId = b.ArtistId  
+
+left join Track  c
+on b.AlbumId = c.AlbumId
+
+left join InvoiceLine d 
+on c.TrackId = d.TrackId 
+
+group by 1,2
+
+having coalesce(total_sales,0) <= 0  -- having zero or null sales
+;
+
+
+
+---------------------------------------------
+-- what is each artist's top song by sales? 
+---------------------------------------------
+-- subquery, row_number, joins  
+
+select * 
+from (
+select d.Name as artist_name
+, b.Name as track_name
+, sum(a.UnitPrice) as song_sales 
+, sum(a.UnitPrice) over (partition by d.ArtistId) as artist_sales  
+, row_number() over(partition by d.ArtistId order by sum(a.UnitPrice) desc) as artist_song_rank   
+
+from InvoiceLine a 
+
+inner join Track b 
+on a.TrackId = b.TrackId
+
+inner join Album c 
+on b.AlbumId = c.AlbumId  
+
+inner join Artist d 
+on c.ArtistId = d.ArtistId 
+
+group by 1,2) 
+
+where artist_song_rank = 1
+
+order by artist_sales desc; 
+
+
+
+
+
+
+
+
+
