@@ -1,10 +1,12 @@
 --- Intro to SQL Demo 
 --- TechTogether Seattle 
 --- 12-04-2021 
+--- Updated 04-06-2022
 
 ---------------------------------------------
 -- step 1. look at data  (top 100 records)
 ---------------------------------------------
+
 
 SELECT *
 
@@ -16,6 +18,8 @@ limit 100;
 ---------------------------------------------
 --Q1: What are the total sales by Day in 2007? 
 ---------------------------------------------
+-- filter, aggregate 
+
 select InvoiceDate, 
     sum(Total) as total_sales
 
@@ -30,7 +34,7 @@ order by 1;
 ---------------------------------------------
 --Q2: Total sales for 2007 and 2008 combined 
 ---------------------------------------------
--- union all 
+-- unions, filter, aggregation 
 
 -- 2007
 select strftime('%Y', InvoiceDate) as invoice_year,  -- get year from YYYY-MM-DD format 
@@ -59,6 +63,8 @@ order by 1;
 ---------------------------------------------
 -- what are the total sales by year?
 ---------------------------------------------
+-- string formatting as year, aggregation 
+
 select  strftime('%Y', InvoiceDate) as invoice_year, 
     sum(Total) as total_sales, 
     count(distinct Invoiceid) as number_of_sales, 
@@ -75,6 +81,8 @@ order by 1;
 ---------------------------------------------
 -- what was the most popular artist (or top 3) by number of sales?
 ---------------------------------------------
+-- rank, join, aggregate 
+
 select d.Name as artist_name
 , sum(a.UnitPrice) as total_sales 
 , row_number() over(order by sum(a.UnitPrice) desc) as artist_rank   
@@ -98,6 +106,8 @@ order by total_sales desc;
 ---------------------------------------------
 -- Which artists had no sales? 
 ---------------------------------------------
+-- rank, row_number, case statement, joins
+
 select a.Name as artist_name 
 , case when d.InvoiceLineId is null then 1 else 0 end as no_sale_indicator 
 , sum(d.UnitPrice) as total_sales
