@@ -1,5 +1,5 @@
 # TechTogether Seattle SQL Demo
-# Updated April 2022
+Updated April 2022
 
 This repository contains a SQL script used for the Techtogether Seattle 2021 "Intro to SQL" workshop. 
 
